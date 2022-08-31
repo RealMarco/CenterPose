@@ -2,6 +2,19 @@
 
 ![](readme/fig1.png)
 
+## Marco’s latest contribution of the code
+     
+    1 Compute Euler angles, and then evaluate by our Robotic Packaging shoe dataset
+        1.1 compute directly by 3D positive axial vectors, i.e., box[3] - box[1], box[2] - box[1], box[5] – box[1] (y, z, x)
+            1.1.1 add orientation_cal.py
+            1.1.2 add cal_rotation()  in debuggers.py, which is modified from add_axes() in /src/lib/utils/debuggers.py
+            1.1.3 add additional code in lib/detectors/object_pose.py
+            1.1.4 simply run $ python demo.py --demo ../images/CenterPose/shoe --arch dlav1_34 --load_model ../models/CenterPose/shoe_v1_140.pth --c shoe --show_axes --use_residual --use_pnp --debug 4    ,  then you will see the visualized predicted results in ../demo/shoe and the predicted yaws saved in ../demo/ShoesYaws_CenterPose.xls
+        1.2 compute by as_euler
+            1.2.1 add compute_rotation() in eval_image_official.py and object_pose.py, which is modified from evaluate_rotation() in /src/tools/objectron_eval/eval_image_official.py
+    2 Saved the yaws predicted by CenterPose in a spreadsheet
+        2.1 see the code annotated with “ # To save the yaw_CenterPose_pred in a spreadsheet” in object_pose.py
+
 ## Overview
 
 This repository is the official implementation of the paper [Single-Stage Keypoint-based Category-level Object Pose Estimation from an RGB Image](https://arxiv.org/abs/2109.06161) by Lin et al., ICRA 2022 (full citation below).  For videos, please visit the [CenterPose project site](https://sites.google.com/view/centerpose). 
