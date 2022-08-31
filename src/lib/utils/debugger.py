@@ -6,6 +6,7 @@ import numpy as np
 import cv2
 import os
 import math
+from .orientation_cal import img_to_object_r_coor, yaw_cal
 
 class Debugger(object):
     def __init__(self, ipynb=False, theme='black',
@@ -244,11 +245,11 @@ class Debugger(object):
                          (points[temp[1], 0], points[temp[1], 1]), edge_color, 2)
 
         if pred_flag == 'pred':
-            edge_color = (0, 0, 255)
+            edge_color = (0, 0, 255) # red
         elif pred_flag == 'gt':
-            edge_color = (255, 255, 255)
+            edge_color = (255, 255, 255) # black
         elif pred_flag == 'pnp':
-            edge_color = (0, 0, 0)
+            edge_color = (0, 0, 0) # write
 
         # def findIntersection(x1, y1, x2, y2, x3, y3, x4, y4):
         #     px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / (
@@ -300,7 +301,7 @@ class Debugger(object):
         # box 9x3 array
         # OpenCV way
         N = 0.5
-        # Centroid, top, front, right
+        # Centroid, top, front, right point (y,z,x)
         axes_point_list = [0, box[3] - box[1], box[2] - box[1], box[5] - box[1]]
         viewport_point_list = []
         for axes_point in axes_point_list:
@@ -310,14 +311,44 @@ class Debugger(object):
             vector = vector.flatten()
 
             k_3d = np.array([vector[0], vector[1], vector[2]])
-            pp = np.matmul(cam_intrinsic, k_3d.reshape(3, 1))
+            pp = np.matmul(cam_intrinsic, k_3d.reshape(3, 1)) # ()
             viewport_point = [pp[0] / pp[2], pp[1] / pp[2]]
             viewport_point_list.append((int(viewport_point[0]), int(viewport_point[1])))
 
-        # BGR space
+        # BGR space,  (viewport_point_list[0], viewport_point_list[i]) is (start point, and end point) 
         cv2.line(self.imgs[img_id], viewport_point_list[0], viewport_point_list[1], (0, 255, 0), 5)  # y-> green
         cv2.line(self.imgs[img_id], viewport_point_list[0], viewport_point_list[2], (255, 0, 0), 5)  # z-> blue
         cv2.line(self.imgs[img_id], viewport_point_list[0], viewport_point_list[3], (0, 0, 255), 5)  # x-> red
+        # print(viewport_point_list[0], viewport_point_list[1], viewport_point_list[2], viewport_point_list[3])
+    
+    def cal_rotation(self, box, cam_intrinsic, w, h):
+        # w, h = 960, 720 # TODO, acquire w, h from image.shape directly.
+        
+        # box 9x3 array
+        # OpenCV way
+        N = 0.5
+        # Centroid, top, front, right point (y,z,x)
+        axes_point_list = [0, box[3] - box[1], box[2] - box[1], box[5] - box[1]]
+        viewport_point_list = []
+        for axes_point in axes_point_list:
+            vector = axes_point
+            vector = vector / np.linalg.norm(vector) * N if np.linalg.norm(vector) != 0 else 0
+            vector = vector + box[0]
+            vector = vector.flatten()
+
+            k_3d = np.array([vector[0], vector[1], vector[2]])
+            pp = np.matmul(cam_intrinsic, k_3d.reshape(3, 1)) # ()
+            viewport_point = [pp[0] / pp[2], pp[1] / pp[2]]
+            viewport_point_list.append((int(viewport_point[0]), int(viewport_point[1])))
+        # print(viewport_point_list[0], viewport_point_list[1], viewport_point_list[2], viewport_point_list[3])
+        # viewport_point_list[1], [2], [3] stands for y,z,x of CenterPose, and -z, x, -y of our RP system
+        Toe    = img_to_object_r_coor(w,h,viewport_point_list[2][0],viewport_point_list[2][1])
+        Center = img_to_object_r_coor(w,h,viewport_point_list[0][0],viewport_point_list[0][1])
+        HT = Toe - Center
+        HT0 =  np.array([10, 0]) # (x1, y1)
+        yaw_pred = yaw_cal(HT0, HT)
+        return yaw_pred
+        
 
 
     # Draw an arrow for track offsets
@@ -335,6 +366,8 @@ class Debugger(object):
     def show_all_imgs(self, pause=False, time=0):
         if not self.ipynb:
             for i, v in self.imgs.items():
+                cv2.namedWindow('{}'.format(i),0);
+                cv2.resizeWindow('{}'.format(i), 640, 480)
                 cv2.imshow('{}'.format(i), v)
             if cv2.waitKey(0 if pause else 1) == 27:
                 import sys

@@ -90,9 +90,11 @@ if __name__ == '__main__':
 
     # Default params with commandline input
     opt = opts().parser.parse_args()
+    #opt = opts.init(opt)
 
     # Local machine configuration
     # opt.c = 'cup'
+    # opt.c = 'shoe'
     # opt.demo = "../images/CenterPose/cup.mp4"
     # opt.arch = 'dlav1_34'
     # opt.load_model = f"../models/CenterPose/cup_mug_v1_140.pth"
@@ -111,7 +113,7 @@ if __name__ == '__main__':
         opt.tracking = True
         opt.pre_hm_hp = True
         opt.tracking_hp = True
-        opt.track_thresh = 0.1
+        opt.track_thresh = 0.1 #0.1
 
         opt.obj_scale_uncertainty = True
         opt.hps_uncertainty = True

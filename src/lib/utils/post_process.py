@@ -35,12 +35,12 @@ def object_pose_post_process(dets, c, s, h, w, opt, Inference=False):
 
             # from w,h to c[i], s[i]
             bbox = transform_preds(dets['bboxes'][i, j].reshape(-1, 2), c[i], s[i], (w, h))
-            item['bbox'] = bbox.reshape(-1, 4).flatten()
+            item['bbox'] = bbox.reshape(-1, 4).flatten() # 2D bbox
 
             item['ct'] = [(item['bbox'][0] + item['bbox'][2]) / 2, (item['bbox'][1] + item['bbox'][3]) / 2]
 
             kps = transform_preds(dets['kps'][i, j].reshape(-1, 2), c[i], s[i], (w, h))
-            item['kps'] = kps.reshape(-1, 16).flatten()
+            item['kps'] = kps.reshape(-1, 16).flatten() # corners
 
             tracking = dets['tracking'][i, j] * (s[i] / max(w, h))
             item['tracking'] = tracking.reshape(-1, 2).flatten()

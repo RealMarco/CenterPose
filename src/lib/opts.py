@@ -188,7 +188,7 @@ class opts(object):
         self.parser.add_argument('--not_reg_bbox', action='store_true',
                                  help='not regression bounding box size.')
 
-        self.parser.add_argument('--c', default='chair',
+        self.parser.add_argument('--c', default='shoe',
                                  help='category in objectron dataset')
         self.parser.add_argument('--hps_uncertainty', action='store_true',
                                  help='Predict hps_uncertainty or not.')
@@ -412,6 +412,7 @@ class opts(object):
                 opt.dimension_ref = dataset.dimension_ref['mug']
             else:
                 opt.dimension_ref = dataset.dimension_ref[opt.c]
+                print(opt.c)
 
             if opt.use_absolute_scale:
                 opt.dimension_ref = opt.dimension_ref[0][0:3]

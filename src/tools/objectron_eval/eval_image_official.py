@@ -900,9 +900,9 @@ class Evaluator(object):
         if box[0, -1] > 0:
             warnings.warn('Box should have negative Z values.')
 
-        size_x = np.linalg.norm(box[5] - box[1])
-        size_y = np.linalg.norm(box[3] - box[1])
-        size_z = np.linalg.norm(box[2] - box[1])
+        size_x = np.linalg.norm(box[5] - box[1]) # x
+        size_y = np.linalg.norm(box[3] - box[1]) # y
+        size_z = np.linalg.norm(box[2] - box[1]) # z
         size = np.asarray([size_x, size_y, size_z])
         box_o = Box.UNIT_BOX * size
         box_oh = np.ones((4, 9))
@@ -1013,23 +1013,24 @@ class Evaluator(object):
                d(R1, R2) = || log(R_1^T R_2) ||_F / sqrt(2)
 
         Args:
-          box: A 9*3 array of a predicted box.
+          box: A 9*3 array of a predicted box. # 1 + 8 (center keypoint + 8 box vertices) matrix.
           instance: A 9*3 array of an annotated box, in metric level.
 
         Returns:
           Magnitude of the rotation angle difference between the box and instance.
         """
-        prediction = Box.Box(box)
+        prediction = Box.Box(box)  # defined in objectron.dataset.box as Box
         annotation = Box.Box(instance)
-        gt_rotation_inverse = np.linalg.inv(annotation.rotation)
-        rotation_error = np.matmul(prediction.rotation, gt_rotation_inverse)
+        gt_rotation_inverse = np.linalg.inv(annotation.rotation) # matrix inversion
+        rotation_error = np.matmul(prediction.rotation, gt_rotation_inverse) # matrix product
 
         error_angles = np.array(
-            rotation_util.from_dcm(rotation_error).as_euler('zxy'))
+            rotation_util.from_dcm(rotation_error).as_euler('zxy')) 
+            # lower case 'zxy' stands for extrinsic rotations, i.e., roll, pitch, -yaw
         abs_error_angles = np.absolute(error_angles)
         abs_error_angles = np.minimum(
             abs_error_angles, np.absolute(math.pi * np.ones(3) - abs_error_angles))
-        error = np.linalg.norm(abs_error_angles)
+        error = np.linalg.norm(abs_error_angles) # 2-ord norm
 
         # Compute the error as the angle between the two rotation
         rotation_error_trace = abs(np.matrix.trace(rotation_error))
@@ -1047,6 +1048,77 @@ class Evaluator(object):
         rotation_distance = rotation_error_frob_norm / 1.4142
 
         return (error, quat_distance, angular_distance, rotation_distance)
+    
+    def compute_rotation(self, box):
+        """Evaluates rotation of a 3D box.
+
+        1. The L2 norm of rotation angles
+        2. The rotation angle computed from rotation matrices
+              trace(R_1^T R_2) = 1 + 2 cos(theta)
+              theta = arccos((trace(R_1^T R_2) - 1) / 2)
+
+        3. The rotation angle computed from quaternions. Similar to the above,
+           except instead of computing the trace, we compute the dot product of two
+           quaternion.
+             theta = 2 * arccos(| p.q |)
+           Note the distance between quaternions is not the same as distance between
+           rotations.
+
+        4. Rotation distance from "3D Bounding box estimation using deep learning
+           and geometry""
+               d(R1, R2) = || log(R_1^T R_2) ||_F / sqrt(2)
+
+        Args:
+          box: A 9*3 array of a predicted box. # 1 + 8 (center keypoint + 8 box vertices) matrix.
+          instance: A 9*3 array of an annotated box, in metric level.
+
+        Returns:
+          Magnitude of the rotation angle difference between the box and instance.
+        """
+        # box in initial position and rotation
+        size_x = np.linalg.norm(box[5] - box[1]) # x
+        size_y = np.linalg.norm(box[3] - box[1]) # y
+        size_z = np.linalg.norm(box[2] - box[1]) # z
+        size = np.asarray([size_x, size_y, size_z])
+        instance = Box.UNIT_BOX * size
+        
+        prediction = Box.Box(box)  # defined in objectron.dataset.box as Box
+        annotation = Box.Box(instance)
+        gt_rotation_inverse = np.linalg.inv(annotation.rotation) # matrix inversion
+        rotation_error = np.matmul(prediction.rotation, gt_rotation_inverse) # matrix product
+
+        #error_angles = np.array(rotation_util.from_dcm(rotation_error).as_euler('zxy')) 
+        error_angles = np.array(rotation_util.from_dcm(rotation_error).as_euler('zyx'))
+        # from_dcm initialize from direction cosine matrix.    
+        # as_euler('zxy') lower case 'zxy' stands for extrinsic rotations, i.e., roll, pitch, -yaw
+        # as_euler('zyx') stands for roll -yaw pitch
+        # the range of the 1st, 2nd, 3rd angles is [-180, 180], [-180, 180] and [-90, 90] ([0,180])
+        '''
+        abs_error_angles = np.absolute(error_angles)
+        abs_error_angles = np.minimum(
+            abs_error_angles, np.absolute(math.pi * np.ones(3) - abs_error_angles))
+        error = np.linalg.norm(abs_error_angles) # 3 error angle to one 2-ord norm
+        '''
+        '''
+        # Compute the error as the angle between the two rotation
+        # What are the differences between error and augular distance
+        rotation_error_trace = abs(np.matrix.trace(rotation_error))
+        angular_distance = math.acos((rotation_error_trace - 1.) / 2.)
+
+        # angle = 2 * acos(|q1.q2|)
+        box_quat = np.array(rotation_util.from_dcm(prediction.rotation).as_quat())
+        gt_quat = np.array(rotation_util.from_dcm(annotation.rotation).as_quat())
+        quat_distance = 2 * math.acos(np.dot(box_quat, gt_quat))
+
+        # The rotation measure from "3D Bounding box estimation using deep learning
+        # and geometry"
+        rotation_error_log = scipy.linalg.logm(rotation_error)
+        rotation_error_frob_norm = np.linalg.norm(rotation_error_log, ord='fro')
+        rotation_distance = rotation_error_frob_norm / 1.4142
+        '''
+
+        #return (error, quat_distance, angular_distance, rotation_distance)
+        return error_angles # ndarray, shape (3,) or (N, 3)
 
     def evaluate_iou(self, box, instance):
         """Evaluates a 3D box by 3D IoU.

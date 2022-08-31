@@ -24,6 +24,13 @@ from lib.utils.post_process import object_pose_post_process
 
 from .base_detector import BaseDetector
 
+import xlwt   # xlrd, xlutils
+import math
+import scipy
+from scipy.spatial.transform import Rotation as rotation_util
+#import objectron.dataset.box as Box
+import tools.objectron_eval.objectron.dataset.box as Box
+
 def soft_nms_nvidia(src_boxes, sigma=0.5, Nt=0.3, threshold=0.001, method=0):
     N = src_boxes.shape[0]
     pos = 0
@@ -127,6 +134,13 @@ class ObjectPoseDetector(BaseDetector):
     def __init__(self, opt):
         super(ObjectPoseDetector, self).__init__(opt)
         self.flip_idx = opt.flip_idx
+        # To save the yaw_CenterPose_pred in a spreadsheet
+        self.row_idx = 0
+        self.obj=xlwt.Workbook(encoding='utf-8',style_compression=0)
+        self.sheet=self.obj.add_sheet('CenterPose_shoes_yaws',cell_overwrite_ok=True)
+        self.sheet.col(0).width=512*20
+        self.sheet.write(0,0,'img_name')    # write(row,col,value)
+        self.sheet.write(0,1,'yaw_CenterPose_pred')
 
     def process(self, images, pre_images=None, pre_hms=None, pre_hm_hp=None,
                 pre_inds=None, return_time=False):
@@ -279,6 +293,22 @@ class ObjectPoseDetector(BaseDetector):
             debugger.add_blend_img(pre_img, pre_hmhp, 'pre_hmhp')
 
     def show_results(self, debugger, image, results):
+        '''
+        when opt.debug >= 1 and opt.debug < 4:
+        Parameters
+        ----------
+        debugger : TYPE
+            DESCRIPTION.
+        image : TYPE
+            DESCRIPTION.
+        results : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        '''
         debugger.add_img(image, img_id='out_img_pred')
         for bbox in results:
             if bbox['score'] > self.opt.vis_thresh:
@@ -316,6 +346,29 @@ class ObjectPoseDetector(BaseDetector):
         debugger.show_all_imgs(pause=self.pause)
 
     def save_results_eval(self, debugger, image, results, image_or_path_or_tensor, dict_out=None, video_layout=False):
+        '''
+        when opt.debug == 6
+
+        Parameters
+        ----------
+        debugger : TYPE
+            DESCRIPTION.
+        image : TYPE
+            DESCRIPTION.
+        results : TYPE
+            DESCRIPTION.
+        image_or_path_or_tensor : TYPE
+            DESCRIPTION.
+        dict_out : TYPE, optional
+            DESCRIPTION. The default is None.
+        video_layout : TYPE, optional
+            DESCRIPTION. The default is False.
+
+        Returns
+        -------
+        None.
+
+        '''
         debugger.add_img(image, img_id='out_img_pred')
         for bbox in results:
             if bbox['score'] > self.opt.vis_thresh:
@@ -354,7 +407,29 @@ class ObjectPoseDetector(BaseDetector):
                     json.dump(dict_out, fp)
 
     def save_results(self, debugger, image, results, image_or_path_or_tensor, dict_out=None):
+        '''
+        when opt.debug == 4
+
+        Parameters
+        ----------
+        debugger : TYPE
+            DESCRIPTION.
+        image : TYPE
+            DESCRIPTION.
+        results : TYPE
+            DESCRIPTION.
+        image_or_path_or_tensor : TYPE
+            DESCRIPTION.
+        dict_out : TYPE, optional
+            DESCRIPTION. The default is None.
+
+        Returns
+        -------
+        None.
+
+        '''
         debugger.add_img(image, img_id='out_img_pred')
+        
         for bbox in results:
             if bbox['score'] > self.opt.vis_thresh:
                 if self.opt.reg_bbox:
@@ -374,9 +449,29 @@ class ObjectPoseDetector(BaseDetector):
                         if self.opt.show_axes == True or self.opt.paper_display == True:
                             if self.opt.tracking_task == True:
                                 debugger.add_axes(bbox['kps_3d_cam_kf'], self.opt.cam_intrinsic, img_id='out_img_pred')
+                                # print(bbox['kps_3d_cam_kf']) # tracking wasn't used
                             else:
-                                debugger.add_axes(bbox['kps_3d_cam'], self.opt.cam_intrinsic, img_id='out_img_pred')
-
+                                debugger.add_axes(bbox['kps_3d_cam'], self.opt.cam_intrinsic, img_id='out_img_pred') # bbox['kps_3d_cam'] is a 9x3 array 
+                                #print(image_or_path_or_tensor) # '../images/CenterPose/shoe/IMG_20211207_141437.jpg'
+                                #print(image.shape)  #  h,w,c 
+                                #print(bbox['kps_3d_cam']) # 9x3 array
+                                
+                                # compute euler angles by as_euler
+                                #euler_angles =  self.compute_rotation(bbox['kps_3d_cam']) 
+                                #print(euler_angles)
+                                
+                                # compute euler angles by 2D projection
+                                yaw_pred = debugger.cal_rotation(bbox['kps_3d_cam'], self.opt.cam_intrinsic, image.shape[1], image.shape[0]) # yaw_pred is a number
+                                # print(yaw_pred) # a number                                
+                                
+                                # To save the yaw_CenterPose_pred in a spreadsheet
+                                # global row_idx
+                                self.row_idx = self.row_idx + 1
+                                self.sheet.write(self.row_idx,0,image_or_path_or_tensor.split('/')[-1]) 
+                                self.sheet.write(self.row_idx,1,yaw_pred)
+                                #self.obj.save(os.path.join(self.opt.demo_save,"ShoesYaws_CenterPose.xls"))
+                                
+        
                 if not self.opt.paper_display:
                     if self.opt.obj_scale == True:
                         if self.opt.scale_pool == True:
@@ -389,7 +484,10 @@ class ObjectPoseDetector(BaseDetector):
                         else:
                             # Todo: A temporary location, need updates
                             debugger.add_obj_scale([20, 20, 0, 0], obj_scale, img_id='out_img_pred')
-
+        
+        # To save the yaw_CenterPose_pred in a spreadsheet
+        self.obj.save(os.path.join(self.opt.demo_save,"ShoesYaws_CenterPose.xls"))
+        
         if os.path.isdir(self.opt.demo):
             # We set the saving folder's name = demo_save folder + source folder
             target_dir_path = os.path.join(self.opt.demo_save,
@@ -411,3 +509,63 @@ class ObjectPoseDetector(BaseDetector):
 
             with open(f"{target_dir_path}/{file_id_name}.json", 'w') as fp:
                 json.dump(dict_out, fp)
+                
+    def compute_rotation(self, box):
+        
+        # box in initial position and rotation
+        size_x = np.linalg.norm(box[5] - box[1]) # x
+        size_y = np.linalg.norm(box[3] - box[1]) # y
+        size_z = np.linalg.norm(box[2] - box[1]) # z
+        size = np.asarray([size_x, size_y, size_z])
+        instance = Box.UNIT_BOX * size
+        
+        prediction = Box.Box(box)  # defined in objectron.dataset.box as Box
+        annotation = Box.Box(instance)
+        gt_rotation_inverse = np.linalg.inv(annotation.rotation) # matrix inversion
+        rotation_error = np.matmul(prediction.rotation, gt_rotation_inverse) # matrix product
+        #pred_rotation_inverse = np.linalg.inv(prediction.rotation) # matrix inversion
+        #rotation_error = np.matmul(annotation.rotation, pred_rotation_inverse) # matrix product
+
+        #error_angles = np.array(rotation_util.from_dcm(rotation_error).as_euler('zxy')) 
+        error_angles = np.array(rotation_util.from_dcm(rotation_error).as_euler('zyx'))
+        # from_dcm initialize from direction cosine matrix.    
+        # as_euler('zxy') lower case 'zxy' stands for extrinsic rotations, i.e., roll, pitch, -yaw
+        # as_euler('zyx') stands for roll -yaw pitch
+        # the range of the 1st, 2nd, 3rd angles is [-180, 180], [-180, 180] and [-90, 90] ([0,180])
+        print(error_angles*180/np.pi)  # 3x1
+        
+        
+        HT = box[2]-box[1]
+        HT0 = Box.UNIT_BOX[2] - Box.UNIT_BOX[1] #z0
+        HT_cross = np.cross(HT0,HT)
+        HT_dot   = np.dot(HT0,HT)
+        yaw = np.arctan2(HT_cross, HT_dot)*180/np.pi # arctan2 is identical to the atan2 function of the underlying C library.
+        print(yaw)
+        
+        '''
+        abs_error_angles = np.absolute(error_angles)
+        abs_error_angles = np.minimum(
+            abs_error_angles, np.absolute(math.pi * np.ones(3) - abs_error_angles))
+        error = np.linalg.norm(abs_error_angles) # 3 error angle to one 2-ord norm
+        print(error) # 1x1
+        
+        # Compute the error as the angle between the two rotation
+        # What are the differences between error and augular distance
+        rotation_error_trace = abs(np.matrix.trace(rotation_error))
+        angular_distance = math.acos((rotation_error_trace - 1.) / 2.)
+        print(angular_distance) # 1x1
+        # angle = 2 * acos(|q1.q2|)
+        box_quat = np.array(rotation_util.from_dcm(prediction.rotation).as_quat())
+        gt_quat = np.array(rotation_util.from_dcm(annotation.rotation).as_quat())
+        quat_distance = 2 * math.acos(np.dot(box_quat, gt_quat))
+        print(quat_distance) # 1x1
+        # The rotation measure from "3D Bounding box estimation using deep learning
+        # and geometry"
+        rotation_error_log = scipy.linalg.logm(rotation_error)
+        rotation_error_frob_norm = np.linalg.norm(rotation_error_log, ord='fro')
+        rotation_distance = rotation_error_frob_norm / 1.4142
+        print(rotation_distance) # 1x1
+        '''
+
+        #return (error, quat_distance, angular_distance, rotation_distance)
+        return error_angles # ndarray, shape (3,) or (N, 3)

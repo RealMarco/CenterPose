@@ -463,7 +463,7 @@ class BaseDetector(object):
                     pre_hms, pre_hm_hp, pre_inds = self._get_additional_inputs(
                         self.tracker.tracks, meta, with_hm=self.opt.pre_hm, with_hm_hp=self.opt.pre_hm_hp)
 
-            torch.cuda.synchronize()
+            torch.cuda.synchronize() # ?
             pre_process_time = time.time()
             pre_time += pre_process_time - scale_start_time
 

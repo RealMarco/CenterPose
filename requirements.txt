@@ -16,3 +16,4 @@ setuptools>=49.6.0
 frozendict
 tensorflow
 requests
+xlwt
