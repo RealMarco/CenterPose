@@ -129,11 +129,19 @@ if __name__ == '__main__':
     # opt.tracking_task = True
     # Tracking related
     if opt.tracking_task == True:
+
+        if opt.c == 'chair' or opt.c == 'bike':
+            opt.rotate = 15  # degree
+        else:
+            opt.rotate = 60
+
         opt.obj_scale_uncertainty = True
         opt.hps_uncertainty = True
         opt.tracking_label_mode = 1
         opt.render_hm_mode = 1
         opt.render_hmhp_mode = 2
+        opt.KL_scale_uncertainty = 0.1
+        opt.KL_kps_uncertainty = 0.1
 
         opt.pre_img = True
         opt.pre_hm = True
