@@ -6,8 +6,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import sys  
+if '/usr/lib/python3/dist-packages' in sys.path:  # before importing other modules or packages
+    sys.path.remove('/usr/lib/python3/dist-packages')
+
 import os
 import cv2
+import time # Added
 
 from lib.opts import opts
 from lib.detectors.detector_factory import detector_factory
@@ -17,13 +22,18 @@ import numpy as np
 image_ext = ['jpg', 'jpeg', 'png', 'webp']
 video_ext = ['mp4', 'mov', 'avi', 'mkv']
 time_stats = ['tot', 'load', 'pre', 'net', 'dec', 'post', 'merge', 'pnp', 'track']
-
+# 'tot' stands for 'total'
 
 def demo(opt, meta):
+    start1= time.time() # Added
+    
     os.environ['CUDA_VISIBLE_DEVICES'] = opt.gpus_str
     opt.debug = max(opt.debug, 1)
     Detector = detector_factory[opt.task]
     detector = Detector(opt)
+    
+    processing_time = []  #Added
+    processing_time_p = []  #Added
 
     if opt.use_pnp == True and 'camera_matrix' not in meta.keys():
         raise RuntimeError('Error found. Please give the camera matrix when using pnp algorithm!')
@@ -49,11 +59,14 @@ def demo(opt, meta):
                 4) + '.png'
             ret = detector.run(img, meta_inp=meta,
                                filename=filename)
+            processing_time.append(ret['tot'])  #Added
+            processing_time_p.append(ret['post'])  #Added
+            
             idx = idx + 1
 
             time_str = ''
             for stat in time_stats:
-                time_str = time_str + '{} {:.3f}s |'.format(stat, ret[stat])
+                time_str = time_str + '{} {:.4f}s |'.format(stat, ret[stat])
             print(f'Frame {str(idx).zfill(4)}|' + time_str)
             if cv2.waitKey(1) == 27:
                 break
@@ -81,11 +94,22 @@ def demo(opt, meta):
         for idx, image_name in enumerate(image_names):
             # Todo: External GT input is not enabled in demo yet
             ret = detector.run(image_name, meta_inp=meta)
+            processing_time.append(ret['tot']) #Added
+            processing_time_p.append(ret['post'])  #Added
+            
             time_str = ''
             for stat in time_stats:
-                time_str = time_str + '{} {:.3f}s |'.format(stat, ret[stat])
+                time_str = time_str + '{} {:.4f}s |'.format(stat, ret[stat])
             print(f'Frame {idx}|' + time_str)
-
+    
+    end1= time.time() # Added
+    print("Total time cost by demo() function: %f"%(end1-start1)) # Added
+    
+    avg_time = sum(processing_time)/len(processing_time) # Added 
+    print("Average inference time ('tot') of CenterPose pose estimation: %f"%(avg_time)) #Added
+    avg_time_p = sum(processing_time_p)/len(processing_time_p) # Added 
+    print("Average inference time ('post') of CenterPose pose estimation: %f"%(avg_time_p)) #Added
+    
 
 if __name__ == '__main__':
 
@@ -93,16 +117,14 @@ if __name__ == '__main__':
     opt = opts().parser.parse_args()
     #opt = opts.init(opt)
 
-<<<<<<< HEAD
     # Local machine configuration
     # opt.c = 'cup'
     # opt.c = 'shoe'
     # opt.demo = "../images/CenterPose/cup.mp4"
-=======
+
     # Local machine configuration example for CenterPose
     # opt.c = 'cup' # Only meaningful when enables show_axes option
     # opt.demo = "../images/CenterPose/cup/00007.png"
->>>>>>> 6c89d420b33bd01c14c13f509af08bfe3d8b2fe7
     # opt.arch = 'dlav1_34'
     # opt.load_model = f"../models/CenterPose/cup_mug_v1_140.pth"
     # opt.debug = 2
