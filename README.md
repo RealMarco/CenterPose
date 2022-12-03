@@ -9,7 +9,7 @@
             1.1.1 add orientation_cal.py
             1.1.2 add cal_rotation()  in debuggers.py, which is modified from add_axes() in /src/lib/utils/debuggers.py
             1.1.3 add additional code in lib/detectors/object_pose.py
-            1.1.4 simply run $ python demo.py --demo ../images/CenterPose/shoe_top_cropped --arch dlav1_34 --load_model ../models/CenterPose/shoe_v1_140.pth --c shoe --show_axes --use_residual --use_pnp --debug 4    ,  then you will see the visualized predicted results in ../demo/shoe and the predicted yaws saved in ../demo/ShoesYaws_CenterPose.xls
+            1.1.4 simply run **$ python demo.py --demo ../images/CenterPose/shoe_top_cropped --arch dlav1_34 --load_model ../models/CenterPose/shoe_v1_140.pth --c shoe --show_axes --use_residual --use_pnp --debug 4**    ,  then you will see the visualized predicted results in ../demo/shoe and the predicted yaws saved in ../demo/ShoesYaws_CenterPose.xls
         1.2 compute by as_euler
             1.2.1 add compute_rotation() in eval_image_official.py and object_pose.py, which is modified from evaluate_rotation() in /src/tools/objectron_eval/eval_image_official.py
     2 Saved the yaws predicted by CenterPose in a spreadsheet
