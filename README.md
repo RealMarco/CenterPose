@@ -9,7 +9,8 @@
             1.1.1 add orientation_cal.py
             1.1.2 add cal_rotation()  in debuggers.py, which is modified from add_axes() in /src/lib/utils/debuggers.py
             1.1.3 add additional code in lib/detectors/object_pose.py
-            1.1.4 simply run **$ python demo.py --demo ../images/CenterPose/shoe_top_cropped --arch dlav1_34 --load_model ../models/CenterPose/shoe_v1_140.pth --c shoe --show_axes --use_residual --use_pnp --debug 4**    ,  then you will see the visualized predicted results in ../demo/shoe and the predicted yaws saved in ../demo/ShoesYaws_CenterPose.xls
+            1.1.4 simply run **$ python demo.py --demo ../images/CenterPose/shoe_top_cropped --arch dlav1_34 --load_model ../models/CenterPose/shoe_v1_140.pth --c shoe --show_axes --use_residual --use_pnp --debug 4**    ,  then you will see the visualized predicted results in ../demo/shoe and the predicted yaws saved in ../demo/ShoesYaws_CenterPose.xls   
+            1.1.5 P.S. The demo.py will download "http://dl.yf.io/dla/models/imagenet/dla34-ba72cf86.pth" to /home/dongyi/.cache/torch/checkpoints/dla34-ba72cf86.pt (pretrained DLA34 model) when running at the first time, IF the program is stucking or not running, plz check your network (mainland China users may be blocked)   
         1.2 compute by as_euler
             1.2.1 add compute_rotation() in eval_image_official.py and object_pose.py, which is modified from evaluate_rotation() in /src/tools/objectron_eval/eval_image_official.py
     2 Saved the yaws predicted by CenterPose in a spreadsheet
@@ -51,6 +52,9 @@ For hardware-accelerated ROS2 inference support, please visit [Isaac ROS CenterP
     conda create -n CenterPose python=3.6
     conda activate CenterPose
     pip install -r requirements.txt
+    	# If report ERROR when run $ pip install in CenterPose virtual environment:  
+    	#     Refer to "-IMPORTANT - pip install in conda virtual environment -" at https://github.com/RealMarco/InstallSoftwaresonUbuntu/blob/master/PATH  for solutions  
+    
     conda install -c conda-forge eigenpy
     ~~~
 
@@ -61,6 +65,15 @@ For hardware-accelerated ROS2 inference support, please visit [Isaac ROS CenterP
     git submodule update
     cd $CenterPose_ROOT/src/lib/models/networks/DCNv2
     ./make.sh
+    
+    # If report ERROR when ./make.sh 
+	may replace "#!/usr/bin/env python"  in "CenterPose/src/lib/models/networks/DCNv2/setup.py" by
+	"
+	import sys
+	sys.path.remove('/usr/lib/python3/dist-packages')
+	sys.path.append('/home/dongyi/anaconda3/pkgs')
+	"
+    
     ~~~
 
     [Optional] If you want to use a higher version of PyTorch, you need to download the latest version of [DCNv2](https://github.com/jinfagang/DCNv2_latest.git) and compile the library.
@@ -73,6 +86,7 @@ For hardware-accelerated ROS2 inference support, please visit [Isaac ROS CenterP
     ~~~
 
 4. Download our [CenterPose pre-trained models](https://drive.google.com/drive/folders/16HbCnUlCaPcTg4opHP_wQNPsWouUlVZe?usp=sharing) and move all the `.pth` files to `$CenterPose_ROOT/models/CenterPose/`.  Similarly, download our [CenterPoseTrack pre-trained models](https://drive.google.com/drive/folders/1zOryfHI7ab2Qsyg3rs-zP3ViblknfzGy?usp=sharing) and move all the `.pth` files to `$CenterPose_ROOT/models/CenterPoseTrack/`. We currently provide models for 9 categories: bike, book, bottle, camera, cereal_box, chair, cup, laptop, and shoe. 
+   e.g., Download and save shoe_v1_140.pth to CenterPose/models/CenterPose   
 
 5. Prepare training/testing data
 
@@ -82,7 +96,14 @@ For hardware-accelerated ROS2 inference support, please visit [Isaac ROS CenterP
 
 ## Demo
 
-We provide supporting demos for image, videos, webcam, and image folders. See `$CenterPose_ROOT/images/CenterPose`
+We provide supporting demos for image, videos, webcam, and image folders. See `$CenterPose_ROOT/images/CenterPose`  
+
+For Marco's updated exmaple, run:
+```
+python demo.py --demo ../images/CenterPose/shoe_top_cropped --arch dlav1_34 --load_model ../models/CenterPose/shoe_v1_140.pth --c shoe --show_axes --use_residual --use_pnp --debug 4 
+```
+P.S. The demo.py will download "http://dl.yf.io/dla/models/imagenet/dla34-ba72cf86.pth" to /home/dongyi/.cache/torch/checkpoints/dla34-ba72cf86.pt (pretrained DLA34 model) when running at the first time, IF the program is stucking or not running, plz check your network (mainland China users may be blocked)   
+	
 
 For category-level 6-DoF object estimation on images/video/image folders, run:
 
