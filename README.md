@@ -16,6 +16,7 @@
     2 Saved the yaws predicted by CenterPose in a spreadsheet
         2.1 see the code annotated with “ # To save the yaw_CenterPose_pred in a spreadsheet” in object_pose.py  
     3 Modified demo.py to change the output format (from .3f to.4f) and add outputing the average value of the inference time.   
+    P.S. The code was tested successfully on NVIDIA 1050 with python=3.6, torch==1.1.0, torchvision==0.3.0, cudatookit==9.0, cudnn=7.5, and NVIDIA 3080 with python=3.8, torch==1.11.0+cu113, torchvision==0.12.0+cu113. As for the torch 1.11, you need to download the latest version of DCNv2 and compile the library in the step 3 of [Installation](https://github.com/RealMarco/CenterPose#installation)  
 
 ## Overview
 
@@ -76,7 +77,7 @@ For hardware-accelerated ROS2 inference support, please visit [Isaac ROS CenterP
     
     ~~~
 
-    [Optional] If you want to use a higher version of PyTorch, you need to download the latest version of [DCNv2](https://github.com/jinfagang/DCNv2_latest.git) and compile the library.
+    (Optional) **If you want to use a higher version of PyTorch, you need to download the latest version of** [DCNv2](https://github.com/jinfagang/DCNv2_latest.git) and compile the library. E.g., NVIDIA 3080 with python=3.8, torch==1.11.0+cu113, torchvision==0.12.0+cu113  
     ~~~
     git submodule set-url https://github.com/jinfagang/DCNv2_latest.git src/lib/models/networks/DCNv2
     git submodule sync
