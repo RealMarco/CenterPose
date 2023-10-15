@@ -40,7 +40,8 @@ def demo(opt, meta):
 
     if opt.demo == 'webcam' or \
             opt.demo[opt.demo.rfind('.') + 1:].lower() in video_ext:
-        cam = cv2.VideoCapture(0 if opt.demo == 'webcam' else opt.demo)
+        #TODO $ ls /dev/video* to check the possilbe index of your camera and try them for VideoCapture(index) one by one
+        cam = cv2.VideoCapture(4 if opt.demo == 'webcam' else opt.demo)  # 4, 2
         detector.pause = False
 
         # Check if camera opened successfully
@@ -105,9 +106,9 @@ def demo(opt, meta):
     end1= time.time() # Added
     print("Total time cost by demo() function: %f"%(end1-start1)) # Added
     
-    avg_time = sum(processing_time)/len(processing_time) # Added 
+    avg_time = sum(processing_time)/len(processing_time) if len(processing_time)!=0 else 0.0 # Added 
     print("Average inference time ('tot') of CenterPose pose estimation: %f"%(avg_time)) #Added
-    avg_time_p = sum(processing_time_p)/len(processing_time_p) # Added 
+    avg_time_p = sum(processing_time_p)/len(processing_time_p) if len(processing_time_p)!=0 else 0.0  # Added 
     print("Average inference time ('post') of CenterPose pose estimation: %f"%(avg_time_p)) #Added
     
 

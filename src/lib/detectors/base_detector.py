@@ -298,6 +298,9 @@ class BaseDetector(object):
                                 # Change visibility, following the protocal of COCO
                                 pts = np.zeros((8, 3), dtype='int64')
                                 for idx, p in enumerate(pts_ori):
+                                    p = p.reshape(2,) if p.shape == (2,1) else p  # Added to solve the bug of dimension exceed error 
+#                                    if p.shape == (2,1):
+#                                        print(p, type(p)) 
                                     if p[0] >= ori_width or p[0] < 0 or p[1] < 0 or p[1] >= ori_height:
                                         pts[idx] = [p[0], p[1], 1]  # labeled but not visible
                                     else:

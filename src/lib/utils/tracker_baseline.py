@@ -3,7 +3,8 @@
 # Full text can be found in LICENSE.md
 
 import numpy as np
-from sklearn.utils.linear_assignment_ import linear_assignment
+#from sklearn.utils.linear_assignment_ import linear_assignment  # for scikit-learn==0.22.2 and scipy>=1.4.1
+from scipy.optimize import linear_sum_assignment # for scikit-learn==1.2.2 and scipy==1.9.1
 from numba import jit
 import copy
 from filterpy.kalman import KalmanFilter

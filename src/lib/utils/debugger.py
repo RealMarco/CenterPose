@@ -152,10 +152,11 @@ class Debugger(object):
         cat_size = cv2.getTextSize(txt, font, 0.5, 2)[0]
 
         # Todo: For simplicity, comment it to not display it
-        cv2.rectangle(
+		# modified for TMech paper
+        cv2.rectangle(  
             self.imgs[img_id], (bbox[0], bbox[1]), (bbox[2], bbox[3]), c, 2)
 
-        if show_txt:
+        if show_txt: # modified for TMech paper
             cv2.rectangle(self.imgs[img_id],
                           (bbox[0], bbox[1] - cat_size[1] - 2),
                           (bbox[0] + cat_size[0], bbox[1] - 2), c, -1)
@@ -167,9 +168,11 @@ class Debugger(object):
         bbox = np.array(bbox, dtype=np.int32)
         font = cv2.FONT_HERSHEY_SIMPLEX
 
-        if pred_flag == 'pred':
+        if pred_flag == 'pred': 
             txt = 'Pred:{:.3f}/{:.3f}/{:.3f}'.format(scale[0], scale[1], scale[2])
             cat_size = cv2.getTextSize(txt, font, 0.5, 2)[0]
+			
+			# modified for TMech paper
             cv2.rectangle(self.imgs[img_id],
                           (bbox[0], bbox[1] + cat_size[1] + 2),
                           (bbox[0] + cat_size[0], bbox[1] + cat_size[1] + cat_size[1] + 4), (0, 0, 0), -1)
@@ -303,6 +306,7 @@ class Debugger(object):
         N = 0.5
         # Centroid, top, front, right point (y,z,x)
         axes_point_list = [0, box[3] - box[1], box[2] - box[1], box[5] - box[1]]
+#        axes_point_list = [0, box[1] - box[3], box[2] - box[1], box[1] - box[5]] # modified for TMech paper
         viewport_point_list = []
         for axes_point in axes_point_list:
             vector = axes_point
@@ -319,6 +323,12 @@ class Debugger(object):
         cv2.line(self.imgs[img_id], viewport_point_list[0], viewport_point_list[1], (0, 255, 0), 5)  # y-> green
         cv2.line(self.imgs[img_id], viewport_point_list[0], viewport_point_list[2], (255, 0, 0), 5)  # z-> blue
         cv2.line(self.imgs[img_id], viewport_point_list[0], viewport_point_list[3], (0, 0, 255), 5)  # x-> red
+		
+		# modified for TMech paper
+#        print(viewport_point_list[1], viewport_point_list[3])
+#        cv2.arrowedLine(self.imgs[img_id], viewport_point_list[0], viewport_point_list[1], (255, 0, 0), 6)  # blue
+#        cv2.arrowedLine(self.imgs[img_id], viewport_point_list[0], viewport_point_list[2], (0, 0, 255), 6)  # red
+#        cv2.arrowedLine(self.imgs[img_id], viewport_point_list[0], viewport_point_list[3], (0, 255, 0), 6)  # green
         # print(viewport_point_list[0], viewport_point_list[1], viewport_point_list[2], viewport_point_list[3])
     
     def cal_rotation(self, box, cam_intrinsic, w, h):

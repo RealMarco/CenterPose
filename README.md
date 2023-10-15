@@ -101,7 +101,9 @@ We provide supporting demos for image, videos, webcam, and image folders. See `$
 
 For Marco's updated exmaple, run:
 ```
-python demo.py --demo ../images/CenterPose/shoe_top_cropped --arch dlav1_34 --load_model ../models/CenterPose/shoe_v1_140.pth --c shoe --show_axes --use_residual --use_pnp --debug 4 
+python demo.py --demo ../images/CenterPose/shoe_tmech_paper --arch dlav1_34 --load_model ../models/CenterPose/shoe_v1_140.pth --c shoe --show_axes --use_residual --use_pnp --debug 4 
+
+# To compare the pose estimation results between CenterPose and our TMech Paper, uncomment and comment relevant code in /centerpose/src/lib/utils/debugger.py, which are annotated with "modified for TMech papers"
 ```
 P.S. The demo.py will download "http://dl.yf.io/dla/models/imagenet/dla34-ba72cf86.pth" to /home/dongyi/.cache/torch/checkpoints/dla34-ba72cf86.pt (pretrained DLA34 model) when running at the first time, IF the program is stucking or not running, plz check your network (mainland China users may be blocked)   
 	
@@ -117,14 +119,24 @@ Similarly, for category-level 6-DoF object tracking, run:
 ```
 cd $CenterPose_ROOT/src
 python demo.py --demo /path/to/folder/or/video --arch dla_34 --load_model ../path/to/model --tracking_task
+
+e.g.,
+python demo.py --demo ../images/CenterPoseTrack/cola_bottle2.mp4 --arch dla_34 --load_model ../models/CenterPoseTrack/bottle_sym_12_15.pth --tracking_task  --show_axes --c bottle --use_pnp --use_residual
 ```
 
 You can also enable `--debug 2` to display more intermediate outputs or `--debug 4` to save all the intermediate and final outputs.
 
 For the webcam demo (You may want to specify the camera intrinsics via --cam_intrinsic), run:
 ```
-cd $CenterPose_ROOT/src
+cd /centerpose/src/
+conda activate centerpose
 python demo.py --demo webcam --arch dlav1_34 --load_model ../path/to/model
+
+e.g.,
+python demo.py --demo webcam --arch dla_34 --load_model ../models/CenterPoseTrack/bottle_sym_12_15.pth   --tracking_task  --show_axes --c bottle --use_pnp --use_residual
+
+# If an error reported as global cap_v4l.cpp:982 open VIDEOIO(V4L2:/dev/video0): can't open camera by index
+$ ls /dev/video*   #  check the possilbe index of your cameras and try them for cv2.VideoCapture(index) in demo.py one by one
 ```
 
 Similarly, for tracking, run:
